@@ -36,7 +36,7 @@ class Data:
         if 'correction' in catalog.keys(): 
             corr = cat_corr['correction'] 
 
-        self.Type = DorR                # Data or Random file 
+        self.Type = DorR.lower()        # Data or Random file 
         self.columns = None             # Data columns 
         self.ra = None                  # RA
         self.dec = None                 # Dec
@@ -48,7 +48,7 @@ class Data:
         if 'file' in kwargs.keys():     # if file name is specified
             self.file_name = kwargs['file']
         else:                           # otherwise 
-            self.file_name = self.file(DorR, catalog, **kwargs)           # File name of data 
+            self.file_name = self.file(**kwargs)           # File name of data 
     
         self.cosmo = None
         if 'cosmo' in kwargs.keys():    # set Cosmology
