@@ -84,13 +84,13 @@ def compile_fortran_code(code):
 
     # compile command
     if 'FFT_FKP_BOSS_cic_il4' in code_file: 
-        compile_cmd = ' '.join(['ifort -fast -o', fort_exe, code, '-L/usr/local/fftw_intel_s/lib -lsrfftw -lsfftw -lm'])
+        compile_cmd = ' '.join(['ifort -fast -o', exe_file, code, '-L/usr/local/fftw_intel_s/lib -lsrfftw -lsfftw -lm'])
     elif 'power_FKP_SDSS_BOSS' in code_file:
-        compile_cmd = ' '.join(['ifort -fast -o', fort_exe, code])
+        compile_cmd = ' '.join(['ifort -fast -o', exe_file, code])
     elif 'bisp_fast_bin_fftw2' in code_file: 
-        compile_cmd = ' '.join(['ifort -fast -o', fort_exe, code, '-L/usr/local/fftw_intel_s/lib -lsrfftw -lsfftw'])
+        compile_cmd = ' '.join(['ifort -fast -o', exe_file, code, '-L/usr/local/fftw_intel_s/lib -lsrfftw -lsfftw'])
     else: 
-        compile_cmd = ' '.join(['ifort -O3 -o', fort_exe, code, '-L/usr/local/fftw_intel_s/lib -lsfftw -lsfftw'])
+        compile_cmd = ' '.join(['ifort -O3 -o', exe_file, code, '-L/usr/local/fftw_intel_s/lib -lsfftw -lsfftw'])
     
     print 'COMPILE COMMAND' 
     print '===============' 

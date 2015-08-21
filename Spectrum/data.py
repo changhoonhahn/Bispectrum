@@ -19,7 +19,6 @@ import warnings
 import matplotlib.pyplot as plt
 
 # --- Local ----
-from utility.fitstables import mrdfits
 
 class Data: 
     def __init__(self, DorR, catalog, **kwargs): 
@@ -32,9 +31,9 @@ class Data:
 
         '''
         self.catalog = catalog                    # save catalog metadata
-        cat = cat_corr['catalog'] 
+        cat = catalog['catalog'] 
         if 'correction' in catalog.keys(): 
-            corr = cat_corr['correction'] 
+            corr = catalog['correction'] 
 
         self.Type = DorR.lower()        # Data or Random file 
         self.columns = None             # Data columns 
@@ -48,13 +47,13 @@ class Data:
         if 'file' in kwargs.keys():     # if file name is specified
             self.file_name = kwargs['file']
         else:                           # otherwise 
-            self.file_name = self.file(**kwargs)           # File name of data 
+            self.file_name = self.File(**kwargs)           # File name of data 
     
         self.cosmo = None
         if 'cosmo' in kwargs.keys():    # set Cosmology
             self.cosmo = kwargs['cosmo']
 
-    def file(self, **kwargs): 
+    def File(self, **kwargs): 
         ''' Function to get file name of Data class using catalog dictionary. Only default mock 
         catalogs included. See notes.
 
@@ -66,33 +65,34 @@ class Data:
         Notes 
         -----
         * If catalog dictionary is not included, returns None. 
+        * 'default' mocks are the original mocks in which they were downloaded
 
         '''
         cat = self.catalog['catalog']
-        if 'correction' in catalog.keys(): 
+        if 'correction' in (self.catalog).keys(): 
             corr = self.catalog['correction'] 
         else: 
             corr = {'name': 'default'} 
         DorR = self.Type
     
-        if catalog['name'].lower() == 'lasdamasgeo':                # LasDamasGeo --------------
+        if cat['name'].lower() == 'lasdamasgeo':                # LasDamasGeo --------------
             data_dir = '/mount/riachuelo1/hahn/data/LasDamas/Geo/'
 
             if DorR.lower() == 'data':                          # data
-                if correction['name'].lower() == 'default':
+                if corr['name'].lower() == 'default':
                     file_name = ''.join([data_dir, 
                         'sdssmock_gamma_lrgFull_zm_oriana', 
-                        str("%02d" % catalog['n_mock']), catalog['letter'], '_no.rdcz.dat']) 
+                        str("%02d" % cat['n_mock']), cat['letter'], '_no.rdcz.dat']) 
                 else: 
                     return None 
             if DorR.lower() == 'random':                        # random 
                 file_name = '/mount/riachuelo1/hahn/data/LasDamas/Geo/sdssmock_gamma_lrgFull.rand_200x_no.rdcz.dat'
     
-        elif catalog['name'].lower() == 'tilingmock':               # Tiling Mock ---------------
+        elif cat['name'].lower() == 'tilingmock':               # Tiling Mock ---------------
             data_dir = '/mount/riachuelo1/hahn/data/tiling_mocks/'      # data directory
            
-           if DorR.lower() == 'data': 
-                if correction['name'].lower() == 'default': 
+            if DorR.lower() == 'data': 
+                if corr['name'].lower() == 'default': 
                     # all weights = 1 (fibercollisions *not* imposed) 
                     file_name = ''.join([data_dir,
                         'cmass-boss5003sector-icoll012.zlim.dat']) 
@@ -102,12 +102,12 @@ class Data:
                 file_name = ''.join([data_dir, 
                     'randoms-boss5003-icoll012-vetoed.zlim.dat']) 
 
-        elif catalog['name'].lower() == 'qpm':                      # QPM -------------------- 
+        elif cat['name'].lower() == 'qpm':                      # QPM -------------------- 
             data_dir = '/mount/riachuelo1/hahn/data/QPM/dr12d/'              
             if DorR == 'data':                                  # data  
-                if correction['name'].lower() == 'default': 
+                if corr['name'].lower() == 'default': 
                     file_name = ''.join([data_dir, 
-                        'a0.6452_', str("%04d" % catalog['n_mock']), 
+                        'a0.6452_', str("%04d" % cat['n_mock']), 
                         '.dr12d_cmass_ngc.vetoed.dat']) 
                 else: 
                     return None 
@@ -115,54 +115,53 @@ class Data:
                 file_name = ''.join([data_dir, 
                     'a0.6452_rand50x.dr12d_cmass_ngc.vetoed.dat']) 
 
-        elif catalog['name'].lower() == 'patchy':               # PATHCY mocks -------------
+        elif cat['name'].lower() == 'patchy':               # PATHCY mocks -------------
             data_dir = '/mount/riachuelo1/hahn/data/PATCHY/dr12/v6c/'   # data directory
 
             if DorR.lower() == 'data':                  # Data catalogs  
-                if correction['name'].lower() == 'default': 
-                    # true mocks
+                if corr['name'].lower() == 'default': 
                     file_name = ''.join([data_dir, 
                         'Patchy-Mocks-DR12CMASS-N-V6C-Portsmouth-mass_', 
-                        str("%04d" % catalog['n_mock']), '.vetoed.dat']) 
+                        str("%04d" % cat['n_mock']), '.dat']) 
                 else: 
                     return None
             elif DorR == 'random':                      # Random catalog 
                 file_name = ''.join([data_dir, 'Random-DR12CMASS-N-V6C-x50.vetoed.dat'])
     
-        elif catalog['name'].lower() == 'nseries':              # N-series ------------------
+        elif cat['name'].lower() == 'nseries':              # N-series ------------------
             data_dir = '/mount/riachuelo1/hahn/data/Nseries/'
         
             if DorR == 'data':                          # mock catalogs 
-                if correction['name'].lower() in ('default'): 
+                if corr['name'].lower() in ('default'): 
                     file_name = ''.join([data_dir, 
-                        'CutskyN', str(catalog['n_mock']), '.dat']) 
-                elif correction['name'].lower() in ('original'):    # original mock
+                        'CutskyN', str(cat['n_mock']), '.dat']) 
+                elif corr['name'].lower() in ('original'):    # original mock
                     file_name = ''.join([data_dir, 
-                        'CutskyN', str(catalog['n_mock']), '.rdzwc']) 
-                elif correction['name'].lower() in ('wcompfile'):   # wcomp file 
+                        'CutskyN', str(cat['n_mock']), '.rdzwc']) 
+                elif corr['name'].lower() in ('wcompfile'):   # wcomp file 
                     file_name = ''.join([data_dir, 
-                        'CutskyN', str(catalog['n_mock']), '.mask_info']) 
+                        'CutskyN', str(cat['n_mock']), '.mask_info']) 
                 else: 
                     return None
 
             elif DorR == 'random':                      # random catalog 
                 file_name = ''.join([data_dir, 'Nseries_cutsky_randoms_50x_redshifts_comp.dat']) 
     
-        elif 'bigmd' in catalog['name'].lower():                # Big MD ---------------------
+        elif 'bigmd' in cat['name'].lower():                # Big MD ---------------------
             data_dir = '/mount/riachuelo1/hahn/data/BigMD/'
         
             if DorR == 'data':  # mock catalogs 
-                if correction['name'].lower() == 'default':    # true mocks
-                    if catalog['name'].lower() == 'bigmd': 
+                if corr['name'].lower() == 'default':    # true mocks
+                    if cat['name'].lower() == 'bigmd': 
                         file_name = ''.join([data_dir, 
                             'bigMD-cmass-dr12v4_vetoed.dat']) # hardcoded
-                    elif catalog['name'].lower() == 'bigmd1': 
+                    elif cat['name'].lower() == 'bigmd1': 
                         file_name = ''.join([data_dir, 
                             'bigMD-cmass-dr12v4-RST-standardHAM_vetoed.dat']) # hardcoded
-                    elif catalog['name'].lower() == 'bigmd2': 
+                    elif cat['name'].lower() == 'bigmd2': 
                         file_name = ''.join([data_dir, 
                             'bigMD-cmass-dr12v4-RST-quadru_vetoed.dat']) # hardcoded
-                    elif catalog['name'].lower() == 'bigmd3':   
+                    elif cat['name'].lower() == 'bigmd3':   
                         # "best" bigMD August 3, 2015 
                         file_name = ''.join([data_dir, 
                             'BigMD-cmass-dr12v4-RST-standHAM-Vpeak_vetoed.dat']) 
@@ -173,18 +172,18 @@ class Data:
     
             elif DorR == 'random':                  # random catalog 
                 # vetomask-ed random catalog 
-                if catalog['name'].lower() == 'bigmd': 
+                if cat['name'].lower() == 'bigmd': 
                     file_name = ''.join([data_dir, 'bigMD-cmass-dr12v4_vetoed.ran'])
-                elif catalog['name'].lower() == 'bigmd1': 
+                elif cat['name'].lower() == 'bigmd1': 
                     file_name = ''.join([data_dir, 'bigMD-cmass-dr12v4-RST-standardHAM_vetoed.ran'])
-                elif catalog['name'].lower() == 'bigmd2': 
+                elif cat['name'].lower() == 'bigmd2': 
                     file_name = ''.join([data_dir, 'bigMD-cmass-dr12v4-RST-quadru_vetoed.ran'])
-                elif catalog['name'].lower() == 'bigmd3': 
+                elif cat['name'].lower() == 'bigmd3': 
                     file_name = ''.join([data_dir, 'BigMD-cmass-dr12v4-RST-standHAM-Vpeak_vetoed.ran']) 
                 else: 
                     return None 
     
-        elif catalog['name'].lower() == 'cmass':                # CMASS ---------------------
+        elif cat['name'].lower() == 'cmass':                # CMASS ---------------------
             data_dir = '/mount/riachuelo1/hahn/data/CMASS/'
         
             if DorR == 'data':                      # mock catalogs 
@@ -207,7 +206,7 @@ class Data:
         
         # Catalog dictionary 
         cat = self.catalog['catalog'] 
-        if 'correction' in catalog.keys(): 
+        if 'correction' in self.catalog.keys(): 
             corr = self.catalog['correction'] 
         else: 
             corr = {'name': 'default'} 
@@ -677,6 +676,8 @@ class Data:
             omega_m = 0.25  
         elif cat['name'].lower() in ('nseries'): 
             omega_m = 0.31 
+        elif cat['name'].lower() in ('patchy'): 
+            omega_m = 0.307115
         else: 
             raise NotImplementedError('Not yet included') 
         
@@ -687,3 +688,10 @@ class Data:
         cosmo['h'] = 0.676
         cosmo = cosmos.distance.set_omega_k_0(cosmo) 
         self.cosmo = cosmo 
+
+if __name__=='__main__':
+    catdict = {'catalog': {'name': 'patchy', 'n_mock': 1}} 
+    galaxy = Data('data', catdict)
+    galaxy.Cosmo()
+    print galaxy.file_name
+    print galaxy.cosmo
