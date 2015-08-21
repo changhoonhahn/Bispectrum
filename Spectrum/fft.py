@@ -96,51 +96,56 @@ class FFT:
             N_DorR = 0
         elif self.Type == 'random': 
             N_DorR = 1
-
+    
+        cat = self.catalog['catalog']
         # determine "idata"
-        if catalog['name'].lower() == 'cmass': 
+        if cat['name'].lower() == 'cmass': 
             idata = 1 
             ifc = 0 
-        elif catalog['name'].lower() == 'lasdamasgeo': 
+        elif cat['name'].lower() == 'lasdamasgeo': 
             idata = 2
             ifc = 0 
-        elif catalog['name'].lower() == 'qpm': 
+        elif cat['name'].lower() == 'qpm': 
             idata = 3 
             ifc = 0 
-        elif catalog['name'].lower() == 'nseries': 
+        elif cat['name'].lower() == 'patchy': 
+            idata = 6
+            ifc = 0 
+            izbin = 3   # only for patchy 
+        elif cat['name'].lower() == 'nseries': 
             idata = 10 
             ifc = 0 
         else: 
             raise NameError('Not yet included in FFT code') 
         
         # Bash command for version 5 of FFT code 
-        # Bash command for version 5 of FFT code 
-        # Bash command for version 5 of FFT code 
-        # Bash command for version 5 of FFT code 
-        # Bash command for version 5 of FFT code 
-        # Bash command for version 5 of FFT code 
-        # Bash command for version 5 of FFT code 
-        # Bash command for version 5 of FFT code 
-        # Bash command for version 5 of FFT code 
         FFT_cmd = ' '.join([
             FFT_exe, 
             str(idata), 
-            str(spec['box']), str(spec['grid']), 
-            "4", str(DorR_number), str(spec['P0']), 
-            str(ifc), "0", data_file, fft_file]) 
+            str(spec['box']), 
+            str(spec['grid']), 
+            "4", 
+            str(DorR_number), 
+            str(spec['P0']), 
+            str(ifc), 
+            "0", 
+            data_file, fft_file]) 
+        if cat['name'].lower() == 'patchy': 
+            FFT_cmd = ' '.join([ FFT_exe, 
+                str(idata), str(spec['box']), str(spec['grid']), "4", str(DorR_number), str(spec['P0']), str(ifc), "0", 
+                data_file, "3", fft_file]) 
         print FFT_cmd
-
-        if  == 'data':  # don't bother checking if the file exists for mocks and run the damn thing 
+    
+        # Call FFT command
+        if self.Type == 'data':  
+            # don't bother checking if the file exists for mocks and run the damn thing 
             subprocess.call(FFT_cmd.split()) 
-
-        elif DorR.lower() == 'random':      # random takes longer so check to see if it exists first
-            # call FFT randomc ommand 
-            if os.path.isfile(fft_file) == False: 
+        elif self.Type == 'random':      
+            # random takes longer so check to see if it exists first
+            if not os.path.isfile(fft_file) or kwargs['clobber']: 
                 print "Building ", fft_file 
                 subprocess.call(FFT_cmd.split())
             else: 
                 print fft_file, " already exists" 
 
-        print 'Constructing ', 
-
-    return fft_file  
+        return None  
