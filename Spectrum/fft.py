@@ -39,19 +39,22 @@ class FFT:
         if 'file' in kwargs.keys(): 
             self.file_name = kwargs['file'] 
         else: 
-            self.file_name = self.file(**kwargs)
+            self.file_name = self.File(**kwargs)
 
-    def file(self, **kwargs): 
+    def File(self, **kwargs): 
         ''' Return FFT file name 
         '''
-        fft_dir = '/mount/riachuelo1/hahn/FFT/' # fft directory
-         
+        # data file name 
         data = spec_data.Data(self.Type, self.catalog, **kwargs)
         self.data_file = data.file_name 
         data_file = data.file_name 
+        data_dir = '/'.join(data_file.split('/')[:-1]) + '/'    # data directory
+        
+        # FFT dir
+        fft_dir = '/FFT/'.join(data_dir.split('/data/'))
 
         FFT_str =  'FFTv5_'     # currently version 5 of the code 
-    
+        
         # FFTs from data file 
         fft_file = ''.join([fft_dir, 
             FFT_str, data_file.rsplit('/')[-1],

@@ -6,7 +6,7 @@ c  ifort -fast -o bisp_fast_bin_fftw2_quad.exe bisp_fast_bin_fftw2_quad.f -L/usr
 c* INPUT (Check) ************************************************************
 c      parameter(nside=400,nmax=50)
 c      parameter(nside=240,nmax=40)
-      parameter(nside=375,nmax=40)
+      parameter(nside=360,nmax=40)
 c****************************************************************************
       parameter(Dim=3,nsideD=nside**Dim) 
       data nn/nside,nside,nside/
