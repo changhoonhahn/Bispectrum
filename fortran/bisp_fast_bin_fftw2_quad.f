@@ -35,7 +35,8 @@ c      real normk(nsideD,nmax), norm1(2,nsideD)
       common/discrete2/I12d,I13d,alphaSTD
 
 c* INPUT (Check) ************************************************************
-      filecounts='~/Code/Fortran/counts2quad_n360_nmax40_ncut3_s3'
+      filecounts='/home/users/rs123/Code/Fortran/'//
+     $      'counts2quad_n360_nmax40_ncut3_s3'
 c      filecounts='~/Code/Fortran/counts2quad_n240_nmax40_ncut2_s2'
 c      filecounts='~/Code/Fortran/counts2quad_n360_nmax60_ncut2_s2'
       Ncut=3

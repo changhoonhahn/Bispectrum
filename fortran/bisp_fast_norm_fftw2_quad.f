@@ -4,7 +4,7 @@ c     ifort -fast -o bisp_fast_norm_fftw2_quad.exe bisp_fast_norm_fftw2_quad.f -
       integer nside, nsideD, Dim, nn(3), nmax
       integer*8 planf
 c *** INPUT (Check always) *******************************************
-      parameter(nside=375,nmax=40)
+      parameter(nside=360,nmax=40)
 c ********************************************************************
       parameter(Dim=3,nsideD=nside**Dim) 
       data nn/nside,nside,nside/
