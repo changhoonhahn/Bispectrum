@@ -184,6 +184,47 @@ class Spec:
             
         return None  
 
+def avg_pk(catalogs, **kwargs): 
+    ''' Compute the average power spectrum given catalog dictionaries
+
+    '''
+    for i_cat, catalog in enumerate(catalogs): 
+        # Loop through catalog dictionaries 
+        cat = catalog['catalog']
+
+        # make sure that we're averaging over the same catalog  
+        try: 
+            if current_cat != cat['name']:
+                raise TypeError("Catalogs do not match!") 
+        except NameError: 
+            current_cat = cat['name']
+    
+        # read power spectrum
+        powerspec = spec_spec.Spec('bispec', catalog) 
+        powerspec.Read()
+    
+        try: 
+            if k_arr != powerspec.k1: 
+                raise TypeError('k-value arrays do not match')
+        except NameError: 
+            k_arr =  powerspec.k1
+    
+        try: 
+            tot_pk += powerspec.P0k1
+        except NameError: 
+            tot_pk = powerspec.P0k1
+        
+        # number of mocks 
+        try: 
+            n_mocks += 1 
+        except NameError:
+            n_mocks = 1 
+    
+    # calculate average P(k)
+    avg_pk = tot_pk/np.float(n_mocks)   
+
+    return [k_arr, avg_pk]
+
 if __name__=='__main__': 
     catdict = {'catalog': {'name': 'patchy', 'n_mock': 1}} 
     spec = Spec('bispec', catdict)

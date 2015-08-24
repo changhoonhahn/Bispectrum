@@ -1,6 +1,6 @@
 '''
 
-Plotting codes for FiberCollisions project
+Plotting for PATCHY paper bispectrum measurements
 
 
 Author(s): ChangHoon Hahn 
@@ -17,190 +17,48 @@ import cosmolopy as cosmos
 from matplotlib.collections import LineCollection
 
 # --- Local --- 
-import fibcol_data as fc_data
-import fibcol_nbar as fc_nbar
-import fibcol_dlos as fc_dlos
-import fibcol_spec as fc_spec
-import fibcol_utility as fc_util
-import fibercollisions as fc
-import galaxy_environment as genv
+from Spectrum import data as spec_data
+from Spectrum import fft as spec_fft
+from Spectrum import spec as spec_spec
+from Spectrum import fortran as spec_fort
 
-# Plot P(k) monopole or quadrupole ---------------------
-def plot_pk_fibcol_comp(cat_corrs, n_mock, quad=False, type='ratio', **kwargs): 
-    ''' Plots the comparison of avg(P(k)) (monopole or quadrupole) for multiple 
-    fibercollision correciton methods
-    
-    Paramters
-    ---------
-    cat_corrs : list of catalog correction dictionary 
-    n_mock : number of mocks 
-    quad : If True, then plot quadrupole. If False plot monopole
-    type : 'regular' compares the actual P2(k) values, 'ratio' compares the ratio 
-    with the true P2(k), 'residual' compares the difference with the true P2(k) 
+def plot_avgpk(catalogs, **kwargs): 
+    ''' Plot the average power spectrum of given catalog dictionaries 
 
-    Notes
+    Parameters
+    ----------
+    catalogs : list of catalog dictionaries 
+    type : regular, ratio, residual 
+
+    Notes 
     -----
-    * Make sure 'true' is first in the correction method list!
+    * At the moment it reads P(k1) from bispectrum file 
 
     '''
-    prettyplot()                         # set up plot 
+    # make figure pretty 
+    prettyplot() 
     pretty_colors = prettycolors()
     
-    fig = plt.figure(1, figsize=(7, 8)) # set up figure 
+    if 'fig' not in kwargs.keys(): 
+        # unless figure is passed 
+        fig = plt.figure(1, figsize=(7, 8)) # set up figure 
+
     sub = fig.add_subplot(111)
-    if 'Ngrid' in kwargs.keys():
-        Ngrid = kwargs['Ngrid']
-    else: 
-        Ngrid = 360         # default Ngrid
+    
+    # average P(k) 
+    k_arr, avg_pk = spec_spec.avg_pk(catalogs) 
+    
+    if 'ls' not in kwargs.keys(): 
+        lstyle = '-'
+    
+    # catalog label 
+    lbl = ' '.join([current_cat.upper(), ':', str(n_mocks), ' mocks'])
 
-    for i_corr, cat_corr in enumerate(cat_corrs):     # loop through correction methods
-        catalog = cat_corr['catalog']
-        correction = cat_corr['correction']
+    # plot P(k)
+    sub.plot(k_arr, avg_Pk, color=pretty_colors[i_corr+1], ls=lstyle,  
+            label=lbl, lw=4)
 
-        # power/bispectrum properties 
-        if catalog['name'].lower() == 'tilingmock':   # Tiling Mock is unique
-            spec = {'P0': 20000, 'sscale':4000.0, 'Rbox':2000.0, 'box':4000, 
-                    'grid': Ngrid, 'quad': quad} 
-        else:       # default spectrum properties  
-            spec = {'P0': 20000, 'sscale':3600.0, 'Rbox':1800.0, 'box':3600, 
-                    'grid': Ngrid, 'quad': quad} 
 
-        try: 
-            if len(n_mock) == len(cat_corrs): 
-                n_mock_i = n_mock[i_corr] 
-            else: 
-                raise NameError('they need to match') 
-
-        except TypeError: 
-            n_mock_i = n_mock 
-
-        if catalog['name'].lower() in ('lasdamasgeo', 'ldgdownnz'):             # LasDamasGeo 
-            # compute average[P(k)] for each correction method
-            n_file = 0
-            for i_mock in range(1, n_mock_i+1):
-                for letter in ['a', 'b', 'c', 'd']: 
-                    # set catalog correction dictionary for specific file 
-                    i_catalog = catalog.copy() 
-                    i_catalog['n_mock'] = i_mock
-                    i_catalog['letter'] = letter
-                    i_cat_corr = {'catalog': i_catalog, 'correction': correction, 'spec':spec}
-                    
-                    # import power spectrum 
-                    power_i = fc_spec.Spec('power', **i_cat_corr)
-                    print power_i.file_name
-                    power_i.readfile()
-
-                    if quad == True: 
-                        PK = power_i.P2k
-                    else: 
-                        PK = power_i.Pk
-                    
-                    try: 
-                        avg_k 
-                    except NameError: 
-                        avg_k = power_i.k
-                        sum_Pk = PK 
-                    else: 
-                        sum_Pk += PK 
-
-                    n_file = n_file+1
-
-        elif catalog['name'].lower() in ('tilingmock', 'cmass'):       # Tiling Mocks
-            i_cat_corr = {'catalog': catalog, 'correction': correction, 'spec':spec}
-
-            power = fc_spec.Spec('power', **i_cat_corr)         # read tiling mock P(k)
-            power.readfile()
-            print power.file_name
-
-            avg_k = power.k
-
-            if quad == True: 
-                sum_Pk = power.P2k
-            else: 
-                sum_Pk = power.Pk
-
-            n_file = 1          # only one file 
-        
-        elif 'bigmd' in catalog['name'].lower():                        # BigMD
-            i_cat_corr = {'catalog': catalog, 'correction': correction, 'spec':spec}
-
-            power = fc_spec.Spec('power', **i_cat_corr)         # read tiling mock P(k)
-            power.readfile()
-            print power.file_name
-
-            avg_k = power.k
-
-            if quad == True: 
-                sum_Pk = power.P2k
-            else: 
-                sum_Pk = power.Pk
-
-            n_file = 1          # only one file 
-
-        elif catalog['name'].lower() in ('qpm', 'nseries', 'patchy'):           # QPM/PATCHY
-            n_file = 0  
-            for i_mock in range(1, n_mock_i+1): 
-                i_catalog = catalog.copy() 
-                i_catalog['n_mock'] = i_mock
-                i_cat_corr = {'catalog': i_catalog, 'correction': correction, 'spec':spec}
-                    
-                power_i = fc_spec.Spec('power', **i_cat_corr)
-                #print power_i.file_name
-                power_i.readfile()
-
-                if quad: 
-                    PK = power_i.P2k
-                else: 
-                    PK = power_i.Pk
-                    
-                try: 
-                    avg_k 
-                except NameError: 
-                    avg_k = power_i.k
-                    sum_Pk = PK
-                else: 
-                    sum_Pk += PK 
-
-                n_file += 1
-
-        else: 
-            raise NameError('not yet coded!')
-
-        # calculate the average P(k)
-        avg_Pk = [ sum_Pk[i]/np.float(n_file) for i in range(len(sum_Pk)) ] 
-        
-        if type == 'regular':                       # P(k) Comparison
-            if i_corr > 0: 
-                lstyle = '--' 
-            else: 
-                lstyle = '-' 
-
-            if correction['name'].lower() == 'true':    # P_true(k) 
-            
-                lbl = ' '.join([catalog['name'].upper(), correction['name'].upper()])
-                sub.plot(avg_k, avg_Pk, 
-                        color=pretty_colors[i_corr+1], ls=lstyle,  
-                        label=lbl, lw=4)
-
-            elif correction['name'].lower() in ('peak', 'peaknbar', 'peaktest', 
-                    'peakshot', 'allpeakshot', 'vlospeakshot'):
-
-                if correction['name'] == 'peakshot': 
-                    corr_name = 'Hahn' 
-                else: 
-                    corr_name = correction['name']  
-                
-                if correction['fit'].lower() in ('expon', 'gauss'): 
-                    resid_label = ''.join([
-                        corr_name, ': ', 
-                        str(correction['sigma']), ',', str(correction['fpeak'])
-                        ]) 
-
-                elif correction['fit'].lower() in ('true'): 
-                    resid_label = ''.join([
-                        corr_name, ': ', str(correction['fpeak'])
-                        ]) 
-            
                 sub.scatter(avg_k, avg_Pk, 
                         color=pretty_colors[i_corr+1], label=resid_label)
 
