@@ -231,79 +231,47 @@ def avg_spec(catalogs, type, **kwargs):
             except NameError: 
                 tot_spec = bipowerspec.P0k1
 
-        elif 'bk' in type: 
-            # bispectrum B(k)
-            if 'avgk' in kwargs.keys() or 'kmax' in kwargs.keys(): 
+        else:
+            # bispectrum B(k) or reduce bispectrum Q(k)
+            try: 
                 if kwargs['avgk'] and kwargs['kmax']: 
                     raise ValueError('both average k and maximum k cannot be specified together')
-
+            except KeyError:
+                # there should be key error
+                pass 
+            
+            try: 
                 if kwargs['avgk']:  # average(k1,k2,k3)
                     try: 
                         if not np.array_equal(k_arr, bipowerspec.avgk): 
                             raise ValueError('k-value arrays do not match')
                     except NameError: 
                         k_arr = bipowerspec.avgk
-                elif kwargs['kmax']: 
-                    try: 
-                        if not np.array_equal(k_arr, bipowerspec.kmax): 
-                            raise ValueError('k-value arrays do not match')
-                    except NameError: 
-                        k_arr = bipowerspec.kmax
-                else: 
+            except KeyError:
+                try: 
+                    if kwargs['kmax']: 
+                        try: 
+                            if not np.array_equal(k_arr, bipowerspec.kmax): 
+                                raise ValueError('k-value arrays do not match')
+                        except NameError: 
+                            k_arr = bipowerspec.kmax
+                except KeyError:
                     try: 
                         if not np.array_equal(k_arr, bipowerspec.i_triangle): 
                             raise ValueError('k-value arrays do not match')
                     except NameError: 
                         k_arr = bipowerspec.i_triangle
-            else: 
+            
+            if 'bk' in type: 
                 try: 
-                    if not np.array_equal(k_arr, bipowerspec.i_triangle): 
-                        raise ValueError('k-value arrays do not match')
+                    tot_spec += bipowerspec.Bk
                 except NameError: 
-                    k_arr = bipowerspec.i_triangle
-
-            try: 
-                tot_spec += bipowerspec.Bk
-            except NameError: 
-                tot_spec = bipowerspec.Bk
-
-        elif 'qk' in type:
-            # reduced bispectrum Q123(k)
-            if 'avgk' in kwargs.keys() or 'kmax' in kwargs.keys(): 
-                if kwargs['avgk'] and kwargs['kmax']: 
-                    raise ValueError('both average k and maximum k cannot be specified together')
-
-                if kwargs['avgk']:  # average(k1,k2,k3)
-                    try: 
-                        if not np.array_equal(k_arr, bipowerspec.avgk): 
-                            raise ValueError('k-value arrays do not match')
-                    except NameError: 
-                        k_arr = bipowerspec.avgk
-                elif kwargs['kmax']: 
-                    try: 
-                        if not np.array_equal(k_arr, bipowerspec.kmax): 
-                            raise ValueError('k-value arrays do not match')
-                    except NameError: 
-                        k_arr = bipowerspec.kmax
-                else: 
-                    try: 
-                        if not np.array_equal(k_arr, bipowerspec.i_triangle): 
-                            raise ValueError('k-value arrays do not match')
-                    except NameError: 
-                        k_arr = bipowerspec.i_triangle
-            else: 
+                    tot_spec = bipowerspec.Bk
+            elif 'qk' in type:
                 try: 
-                    if not np.array_equal(k_arr, bipowerspec.i_triangle): 
-                        raise ValueError('k-value arrays do not match')
+                    tot_spec += bipowerspec.Qk
                 except NameError: 
-                    k_arr = bipowerspec.i_triangle
-
-            try: 
-                tot_spec += bipowerspec.Qk
-            except NameError: 
-                tot_spec = bipowerspec.Qk
-        else: 
-            raise NotImplementedError('Only P(k), B(k), and Q(k) implemented') 
+                    tot_spec = bipowerspec.Qk
 
         # number of mocks 
         try: 

@@ -63,7 +63,10 @@ def plot_spec(x, y, type, fig=None, **kwargs):
         lbl = kwargs['label'] 
 
     # plot P(k)
-    sub.plot(x, y, color=clr, ls=lstyle, label=lbl, lw=4)
+    if type == 'pk': 
+        sub.plot(x, y, color=clr, ls=lstyle, label=lbl, lw=4)
+    else: 
+        sub.scatter(x, y, color=clr, label=lbl)
 
     # set axes
     # x-range 
@@ -92,19 +95,28 @@ def plot_spec(x, y, type, fig=None, **kwargs):
                 ylimit = [0.5, 2.0]
         elif 'bk' in type: 
             if 'ratio' not in type.lower(): 
-                ylimit = [-0.5*10**11,2.0*10**11]
+                ylimit = [-0.5*10**10,5*10**10]
             else: 
                 ylimit = [0.5, 2.0]
         elif 'qk' in type: 
             if 'ratio' not in type.lower(): 
-                ylimit = [-5., 20.]
+                ylimit = [-2., 5.]
             else: 
                 ylimit = [0.5, 2.0]
         else: 
             raise NotImplementedError('not yet implemented') 
     sub.set_ylim(ylimit)
     # x-label 
-    sub.set_xlabel('k', fontsize=20)
+    if 'pk' in type: 
+        sub.set_xlabel('k', fontsize=20)
+    elif 'bk' in type or 'qk' in type: 
+        if 'avgk' in kwargs.keys(): 
+            sub.set_xlabel(r'Average $(k_1, k_2, k_3)$')
+        elif 'kmax' in kwargs.keys(): 
+            sub.set_xlabel(r'Maximum $(k_1, k_2, k_3)$')
+        else: 
+            sub.set_xlabel(r'Triangle')
+
     # y-label  
     if 'ylabel' in kwargs.keys(): 
         ylabel = kwargs['ylabel']
@@ -130,11 +142,16 @@ def plot_spec(x, y, type, fig=None, **kwargs):
     sub.set_ylabel(ylabel, fontsize=20)
     
     # log log plot hardcoded 
-    sub.set_xscale('log')
     if 'pk' in type: 
+        sub.set_xscale('log')
         sub.set_yscale('log')
+    elif 'bk' in type or 'qk' in type: 
+        if 'avgk' in kwargs.keys(): 
+            sub.set_xscale('log')
+        elif 'kmax' in kwargs.keys(): 
+            sub.set_xscale('log')
 
-    sub.legend(loc='upper left', scatterpoints=1, prop={'size':14})
+    sub.legend(loc='upper right', scatterpoints=1, prop={'size':20})
     return fig 
 
 def plot_avgSpec_comp(catalog_names, n_mocks, type, **kwargs): 
@@ -162,8 +179,15 @@ def plot_avgSpec_comp(catalog_names, n_mocks, type, **kwargs):
             raise ValueError("Input list dimensions do not match!")
     else: 
         n_mocks = [None for i in range(len(catalog_names))]
-
-    spec_fig = plt.figure(1, figsize=(7, 8)) # set up figure 
+    
+    if 'pk' in type: 
+        fig_size = (7,8)
+    else: 
+        if 'avgk' in kwargs.keys() or 'kmax' in kwargs.keys(): 
+            fig_size = (7,8)
+        else: 
+            fig_size = (14, 8)
+    spec_fig = plt.figure(1, figsize=fig_size) # set up figure 
 
     for i_cat, catalog_name in enumerate(catalog_names): 
         # Loop through different catalogs
@@ -177,14 +201,28 @@ def plot_avgSpec_comp(catalog_names, n_mocks, type, **kwargs):
             k_arr, avg_spec = spec_spec.avg_spec(cat_dict_list, type, **kwargs)
         else: 
             raise NotImplementedError("Bispectrum not implemented yet")
-        
+
+        kwargs['label'] = ''.join([catalog_name.upper(), ': ', str(n_mocks[i_cat])])
         spec_fig = plot_spec(k_arr, avg_spec, type, fig=spec_fig, **kwargs)
     
     # save figure 
-    fig_file = ''.join(['../figure/PATCHY_paper/', 
-        'plot_avgSpec_comp_', type, '.png'])
-    spec_fig.savefig(fig_file, bbox_inches='tight') 
+    if 'pk' in type: 
+        fig_file = ''.join(['../figure/PATCHY_paper/', 
+            'plot_avgSpec_comp_', type, '.png'])
+    else: 
+        if 'avgk' in kwargs.keys():
+            fig_file = ''.join(['../figure/PATCHY_paper/', 
+                'plot_avgSpec_comp_avgk_', type, '.png'])
+        elif 'kmax' in kwargs.keys(): 
+            fig_file = ''.join(['../figure/PATCHY_paper/', 
+                'plot_avgSpec_comp_kmax_', type, '.png'])
+        else:
+            fig_file = ''.join(['../figure/PATCHY_paper/', 
+                'plot_avgSpec_comp_triangle_', type, '.png'])
 
+    spec_fig.savefig(fig_file, bbox_inches='tight') 
+    spec_fig.clear() 
+    del spec_fig
     return None 
 
 def catalog_dict(catalog_name, n_mock=None): 
@@ -209,6 +247,9 @@ def catalog_dict(catalog_name, n_mock=None):
     return cat_dict_list
 
 if __name__=="__main__":
-    plot_avgSpec_comp('patchy', 10, 'bk')
-    plot_avgSpec_comp('patchy', 10, 'qk')
-
+    #plot_avgSpec_comp('patchy', 1000, 'bk')
+    #plot_avgSpec_comp('patchy', 1000, 'qk')
+    plot_avgSpec_comp('patchy', 1000, 'bk', kmax=True)
+    plot_avgSpec_comp('patchy', 1000, 'qk', kmax=True)
+    plot_avgSpec_comp('patchy', 1000, 'bk', avgk=True)
+    plot_avgSpec_comp('patchy', 1000, 'qk', avgk=True)
