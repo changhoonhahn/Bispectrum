@@ -180,5 +180,5 @@ def catalog_dict(catalog_name, n_mock=None):
     return cat_dict_list
 
 if __name__=="__main__":
-    plot_avgSpec_comp('patchy', 10, 'pk')
+    plot_avgSpec_comp('patchy', 20, 'pk')
 
