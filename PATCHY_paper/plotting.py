@@ -69,19 +69,35 @@ def plot_spec(x, y, type, fig=None, **kwargs):
     # x-range 
     if 'xrange' in kwargs.keys(): 
         xlimit = kwargs['xrange']
-        yxtext = 1.5*min(kwargs['xrange'])
     else: 
-        xlimit = [10**-3,10**0]
-        yxtext = 1.5*10**-3
+        if 'pk' in type: 
+            xlimit = [10**-3,10**0]     # k range
+        elif 'bk' in type or 'qk' in type: 
+            if 'avgk' in kwargs.keys() or 'kmax' in kwargs.keys(): 
+                xlimit = [10**-3,10**0]     # k range
+            else: 
+                xlimit = [0, 6500]          # triangle index range  
+        else: 
+            raise NotImplementedError('not yet implemented') 
     sub.set_xlim(xlimit)
+
     # y-range (DEPENDS ON TYPE)
     if 'yrange' in kwargs.keys(): 
         ylimit = kwargs['yrange'] 
-        yytext = 10**.5*min(ylimit) 
     else: 
         if 'pk' in type.lower():
             if 'ratio' not in type.lower(): 
                 ylimit = [10**2,10**5.5]
+            else: 
+                ylimit = [0.5, 2.0]
+        elif 'bk' in type: 
+            if 'ratio' not in type.lower(): 
+                ylimit = [-0.5*10**11,2.0*10**11]
+            else: 
+                ylimit = [0.5, 2.0]
+        elif 'qk' in type: 
+            if 'ratio' not in type.lower(): 
+                ylimit = [-5., 20.]
             else: 
                 ylimit = [0.5, 2.0]
         else: 
@@ -98,6 +114,16 @@ def plot_spec(x, y, type, fig=None, **kwargs):
                 ylabel = r'$\mathtt{P_0(k)}$'
             else: 
                 ylabel = r'$\mathtt{P_0(k)}$ ratio'
+        elif 'bk' in type.lower(): 
+            if 'ratio' not in type.lower(): 
+                ylabel = r'$\mathtt{B(k)}$'
+            else: 
+                ylabel = r'$\mathtt{B(k)}$ ratio'
+        elif 'qk' in type.lower(): 
+            if 'ratio' not in type.lower(): 
+                ylabel = r'$\mathtt{Q_{123}(k)}$'
+            else: 
+                ylabel = r'$\mathtt{Q_{123}(k)}$ ratio'
         else: 
             raise NotImplementedError('Not yet coded') 
 
@@ -105,7 +131,8 @@ def plot_spec(x, y, type, fig=None, **kwargs):
     
     # log log plot hardcoded 
     sub.set_xscale('log')
-    sub.set_yscale('log')
+    if 'pk' in type: 
+        sub.set_yscale('log')
 
     sub.legend(loc='upper left', scatterpoints=1, prop={'size':14})
     return fig 
@@ -116,7 +143,7 @@ def plot_avgSpec_comp(catalog_names, n_mocks, type, **kwargs):
     Parameters
     ----------
     catalogs_names : list of catalog names
-    type : pk, pk_ratio, bk, bk_ratio 
+    type : pk, pk_ratio, bk, bk_ratio, qk, qk_ratio
 
     Notes
     -----
@@ -145,6 +172,8 @@ def plot_avgSpec_comp(catalog_names, n_mocks, type, **kwargs):
         cat_dict_list = catalog_dict(catalog_name, n_mock=n_mocks[i_cat])
 
         if 'pk' in type: 
+            k_arr, avg_spec = spec_spec.avg_spec(cat_dict_list, type, **kwargs)
+        elif 'bk' in type or 'qk' in type: 
             k_arr, avg_spec = spec_spec.avg_spec(cat_dict_list, type, **kwargs)
         else: 
             raise NotImplementedError("Bispectrum not implemented yet")
@@ -180,5 +209,6 @@ def catalog_dict(catalog_name, n_mock=None):
     return cat_dict_list
 
 if __name__=="__main__":
-    plot_avgSpec_comp('patchy', 20, 'pk')
+    plot_avgSpec_comp('patchy', 10, 'bk')
+    plot_avgSpec_comp('patchy', 10, 'qk')
 
