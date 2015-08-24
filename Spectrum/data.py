@@ -183,7 +183,7 @@ class Data:
                 else: 
                     return None 
     
-        elif cat['name'].lower() == 'cmass':                # CMASS ---------------------
+        elif 'cmass' in cat['name'].lower():                # CMASS ---------------------
             data_dir = '/mount/riachuelo1/hahn/data/CMASS/'
         
             if DorR == 'data':                      # mock catalogs 
@@ -671,13 +671,19 @@ class Data:
              write(*,*)'specify which dataset you want!'
         """
         # Omega Matter
-        if cat['name'].lower() in ('lasdamasgeo', 'ldgdownnz'): 
+        if cat['name'].lower() in ('lasdamasgeo'): 
             # LasDamas Catalog with SDSS Geometry 
             omega_m = 0.25  
         elif cat['name'].lower() in ('nseries'): 
             omega_m = 0.31 
         elif cat['name'].lower() in ('patchy'): 
             omega_m = 0.307115
+        elif 'cmass' in cat['name'].lower(): 
+            # CMASS
+            if 'fid' not in cat['name'].lower(): 
+                omega_m = 0.274
+            else: 
+                omega_m = 0.31
         else: 
             raise NotImplementedError('Not yet included') 
         
@@ -689,9 +695,19 @@ class Data:
         cosmo = cosmos.distance.set_omega_k_0(cosmo) 
         self.cosmo = cosmo 
 
-if __name__=='__main__':
-    catdict = {'catalog': {'name': 'patchy', 'n_mock': 1}} 
-    galaxy = Data('data', catdict)
-    galaxy.Cosmo()
-    print galaxy.file_name
-    print galaxy.cosmo
+def build_data(DorR, catalog): 
+    ''' Construct data for powerspectrum/bispectrum calculation 
+    
+    Parameters
+    ----------
+    DorR : data or random  
+    catalog : catalog dictionary 
+
+    Notes
+    -----
+    
+    '''
+    cat = catalog['catalog']     
+
+    if cat['name'] == 'cmass': 
+
