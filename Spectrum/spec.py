@@ -184,11 +184,16 @@ class Spec:
             
         return None  
 
-def avg_pk(catalogs, **kwargs): 
-    ''' Compute the average power spectrum given catalog dictionaries
+def avg_spec(catalogs, type, **kwargs): 
+    ''' Compute the average powerspectrum/bispectrum given catalog dictionaries
+    
+    Notes
+    -----
+    * currently hardcoded to only read Bispectrum file. This should eventually be adjusted to take in both power and bispectrum
+    * returns [k values, average P(k)/B(k) value) 
 
     '''
-    for i_cat, catalog in enumerate(catalogs): 
+    for catalog in catalogs: 
         # Loop through catalog dictionaries 
         cat = catalog['catalog']
 
@@ -200,19 +205,28 @@ def avg_pk(catalogs, **kwargs):
             current_cat = cat['name']
     
         # read power spectrum
-        powerspec = spec_spec.Spec('bispec', catalog) 
+        # needs to be editted to account for P(k)
+        # needs to be editted to account for P(k)
+        # needs to be editted to account for P(k)
+        # needs to be editted to account for P(k)
+        # needs to be editted to account for P(k)
+        powerspec = Spec('bispec', catalog) 
         powerspec.Read()
+        print (powerspec.file_name).split('/')[-1]
+        
+        try: 
+            if not np.array_equal(k_arr, powerspec.k1): 
+                raise ValueError('k-value arrays do not match')
+        except NameError: 
+            k_arr = powerspec.k1
     
         try: 
-            if k_arr != powerspec.k1: 
-                raise TypeError('k-value arrays do not match')
+            tot_spec += powerspec.P0k1
         except NameError: 
-            k_arr =  powerspec.k1
-    
-        try: 
-            tot_pk += powerspec.P0k1
-        except NameError: 
-            tot_pk = powerspec.P0k1
+            tot_spec = powerspec.P0k1
+        ##### 
+        ##### 
+        ##### 
         
         # number of mocks 
         try: 
@@ -221,9 +235,9 @@ def avg_pk(catalogs, **kwargs):
             n_mocks = 1 
     
     # calculate average P(k)
-    avg_pk = tot_pk/np.float(n_mocks)   
+    avg_spec = tot_spec/np.float(n_mocks)   
 
-    return [k_arr, avg_pk]
+    return [k_arr, avg_spec]
 
 if __name__=='__main__': 
     catdict = {'catalog': {'name': 'patchy', 'n_mock': 1}} 
