@@ -186,6 +186,11 @@ class Spec:
 
 def avg_spec(catalogs, type, **kwargs): 
     ''' Compute the average powerspectrum/bispectrum given catalog dictionaries
+
+    Parameters
+    ----------
+    catalogs : list of catalog dictionaries 
+    type : pk, bk, qk
     
     Notes
     -----
@@ -204,37 +209,109 @@ def avg_spec(catalogs, type, **kwargs):
         except NameError: 
             current_cat = cat['name']
     
-        # read power spectrum
-        # needs to be editted to account for P(k)
-        # needs to be editted to account for P(k)
-        # needs to be editted to account for P(k)
-        # needs to be editted to account for P(k)
-        # needs to be editted to account for P(k)
-        powerspec = Spec('bispec', catalog) 
-        powerspec.Read()
-        print (powerspec.file_name).split('/')[-1]
+        bipowerspec = Spec('bispec', catalog) 
+        bipowerspec.Read()
+        print (bipowerspec.file_name).split('/')[-1]
         
-        try: 
-            if not np.array_equal(k_arr, powerspec.k1): 
-                raise ValueError('k-value arrays do not match')
-        except NameError: 
-            k_arr = powerspec.k1
-    
-        try: 
-            tot_spec += powerspec.P0k1
-        except NameError: 
-            tot_spec = powerspec.P0k1
-        ##### 
-        ##### 
-        ##### 
+        if 'pk' in type:    
+            # power spectrum
+            # needs to be editted to account for P(k)
+            # needs to be editted to account for P(k)
+            # needs to be editted to account for P(k)
+            # needs to be editted to account for P(k)
+            # needs to be editted to account for P(k)
+            try: 
+                if not np.array_equal(k_arr, bipowerspec.k1): 
+                    raise ValueError('k-value arrays do not match')
+            except NameError: 
+                k_arr = bipowerspec.k1
         
+            try: 
+                tot_spec += bipowerspec.P0k1
+            except NameError: 
+                tot_spec = bipowerspec.P0k1
+
+        elif 'bk' in type: 
+            # bispectrum B(k)
+            if 'avgk' in kwargs.keys() or 'kmax' in kwargs.keys(): 
+                if kwargs['avgk'] and kwargs['kmax']: 
+                    raise ValueError('both average k and maximum k cannot be specified together')
+
+                if kwargs['avgk']:  # average(k1,k2,k3)
+                    try: 
+                        if not np.array_equal(k_arr, bipowerspec.avgk): 
+                            raise ValueError('k-value arrays do not match')
+                    except NameError: 
+                        k_arr = bipowerspec.avgk
+                elif kwargs['kmax']: 
+                    try: 
+                        if not np.array_equal(k_arr, bipowerspec.kmax): 
+                            raise ValueError('k-value arrays do not match')
+                    except NameError: 
+                        k_arr = bipowerspec.kmax
+                else: 
+                    try: 
+                        if not np.array_equal(k_arr, bipowerspec.i_triangle): 
+                            raise ValueError('k-value arrays do not match')
+                    except NameError: 
+                        k_arr = bipowerspec.i_triangle
+            else: 
+                try: 
+                    if not np.array_equal(k_arr, bipowerspec.i_triangle): 
+                        raise ValueError('k-value arrays do not match')
+                except NameError: 
+                    k_arr = bipowerspec.i_triangle
+
+            try: 
+                tot_spec += bipowerspec.Bk
+            except NameError: 
+                tot_spec = bipowerspec.Bk
+
+        elif 'qk' in type:
+            # reduced bispectrum Q123(k)
+            if 'avgk' in kwargs.keys() or 'kmax' in kwargs.keys(): 
+                if kwargs['avgk'] and kwargs['kmax']: 
+                    raise ValueError('both average k and maximum k cannot be specified together')
+
+                if kwargs['avgk']:  # average(k1,k2,k3)
+                    try: 
+                        if not np.array_equal(k_arr, bipowerspec.avgk): 
+                            raise ValueError('k-value arrays do not match')
+                    except NameError: 
+                        k_arr = bipowerspec.avgk
+                elif kwargs['kmax']: 
+                    try: 
+                        if not np.array_equal(k_arr, bipowerspec.kmax): 
+                            raise ValueError('k-value arrays do not match')
+                    except NameError: 
+                        k_arr = bipowerspec.kmax
+                else: 
+                    try: 
+                        if not np.array_equal(k_arr, bipowerspec.i_triangle): 
+                            raise ValueError('k-value arrays do not match')
+                    except NameError: 
+                        k_arr = bipowerspec.i_triangle
+            else: 
+                try: 
+                    if not np.array_equal(k_arr, bipowerspec.i_triangle): 
+                        raise ValueError('k-value arrays do not match')
+                except NameError: 
+                    k_arr = bipowerspec.i_triangle
+
+            try: 
+                tot_spec += bipowerspec.Qk
+            except NameError: 
+                tot_spec = bipowerspec.Qk
+        else: 
+            raise NotImplementedError('Only P(k), B(k), and Q(k) implemented') 
+
         # number of mocks 
         try: 
             n_mocks += 1 
         except NameError:
             n_mocks = 1 
     
-    # calculate average P(k)
+    # calculate average P(k), B(k) or Q(k)
     avg_spec = tot_spec/np.float(n_mocks)   
 
     return [k_arr, avg_spec]
@@ -243,17 +320,19 @@ if __name__=='__main__':
     catdict = {'catalog': {'name': 'patchy', 'n_mock': 1}} 
     spec = Spec('bispec', catdict)
     spec.Read()
+    print np.min(spec.Bk), np.max(spec.Bk)
+    print np.min(spec.Qk), np.max(spec.Qk)
     
-    power_file = '/mount/riachuelo1/hahn/power/PATCHY/dr12/v6c/POWERv5_Patchy-Mocks-DR12CMASS-N-V6C-Portsmouth-mass_0001.dat.grid360.P020000.box3600'
-    k, Pk = np.loadtxt(power_file, unpack=True, usecols=[0,1])
+    #power_file = '/mount/riachuelo1/hahn/power/PATCHY/dr12/v6c/POWERv5_Patchy-Mocks-DR12CMASS-N-V6C-Portsmouth-mass_0001.dat.grid360.P020000.box3600'
+    #k, Pk = np.loadtxt(power_file, unpack=True, usecols=[0,1])
 
-    plt.figure(1) 
-    plt.scatter(spec.k1, spec.P0k1, c='b') 
-    plt.plot(k, Pk, ls='--')
-    print spec.k1
-    print spec.P0k1
-    plt.yscale('log')
-    plt.xscale('log')
-    plt.show()  
+    #plt.figure(1) 
+    #plt.scatter(spec.k1, spec.P0k1, c='b') 
+    #plt.plot(k, Pk, ls='--')
+    #print spec.k1
+    #print spec.P0k1
+    #plt.yscale('log')
+    #plt.xscale('log')
+    #plt.show()  
 
     #spec.calculate()
