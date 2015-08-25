@@ -168,6 +168,8 @@ def plot_avgSpec_comp(catalog_names, n_mocks, type, **kwargs):
     * currently P(k) values are from Bispectrum code output (k1, P(k1))
 
     '''
+    prettyplot() 
+    pretty_colors = prettycolors()
     if not isinstance(catalog_names, list): 
         catalog_names = [catalog_names]
 
@@ -191,10 +193,9 @@ def plot_avgSpec_comp(catalog_names, n_mocks, type, **kwargs):
 
     for i_cat, catalog_name in enumerate(catalog_names): 
         # Loop through different catalogs
-
+        
         # get list of catalog dictionaries 
         cat_dict_list = catalog_dict(catalog_name, n_mock=n_mocks[i_cat])
-
         if 'pk' in type: 
             k_arr, avg_spec = spec_spec.avg_spec(cat_dict_list, type, **kwargs)
         elif 'bk' in type or 'qk' in type: 
@@ -202,8 +203,23 @@ def plot_avgSpec_comp(catalog_names, n_mocks, type, **kwargs):
         else: 
             raise NotImplementedError("Bispectrum not implemented yet")
 
-        kwargs['label'] = ''.join([catalog_name.upper(), ': ', str(n_mocks[i_cat])])
-        spec_fig = plot_spec(k_arr, avg_spec, type, fig=spec_fig, **kwargs)
+        if 'ratio' not in type: 
+            kwargs['c'] = pretty_colors[i_cat+1]
+            kwargs['label'] = ''.join([catalog_name.upper(), ': ', str(n_mocks[i_cat])])
+            spec_fig = plot_spec(k_arr, avg_spec, type, fig=spec_fig, **kwargs)
+        else: 
+            try: 
+                spec_ratio = avg_spec/first_spec
+                
+                kwargs['c'] = pretty_colors[i_cat+1]
+                kwargs['label'] = ''.join([catalog_name.upper(), ': ', str(n_mocks[i_cat])])
+                spec_fig = plot_spec(k_arr, spec_ratio, type, fig=spec_fig, **kwargs)
+
+            except NameError: 
+                first_spec = avg_spec
+            
+
+    cat_str = '_'.join(catalog_names)
     
     # save figure 
     if 'pk' in type: 
@@ -212,13 +228,13 @@ def plot_avgSpec_comp(catalog_names, n_mocks, type, **kwargs):
     else: 
         if 'avgk' in kwargs.keys():
             fig_file = ''.join(['../figure/PATCHY_paper/', 
-                'plot_avgSpec_comp_avgk_', type, '.png'])
+                'plot_avgSpec_', cat_str, '_comp_avgk_', type, '.png'])
         elif 'kmax' in kwargs.keys(): 
             fig_file = ''.join(['../figure/PATCHY_paper/', 
-                'plot_avgSpec_comp_kmax_', type, '.png'])
+                'plot_avgSpec_', cat_str, '_comp_kmax_', type, '.png'])
         else:
             fig_file = ''.join(['../figure/PATCHY_paper/', 
-                'plot_avgSpec_comp_triangle_', type, '.png'])
+                'plot_avgSpec_', cat_str, '_comp_triangle_', type, '.png'])
 
     spec_fig.savefig(fig_file, bbox_inches='tight') 
     spec_fig.clear() 
@@ -232,7 +248,7 @@ def catalog_dict(catalog_name, n_mock=None):
     if catalog_name == 'patchy': 
         # PATCHY mocks 
         if n_mock == None: 
-            n_mock == 1000
+            n_mock = 1000
 
         for i_mock in range(1, n_mock+1): 
             # correction and spec are left to default
@@ -240,16 +256,22 @@ def catalog_dict(catalog_name, n_mock=None):
                     {'catalog': {'name': 'patchy', 'n_mock': i_mock}}
                     )
 
-    elif catalog_name == 'cmass': 
+    elif 'cmass' in catalog_name: 
         # CMASS catalog
-        raise NotImplementedError('CMASS not implemented yet')
+        if n_mock == None: 
+            n_mock = 1
+        cat_dict_list.append({'catalog': {'name': catalog_name}})
     
     return cat_dict_list
 
 if __name__=="__main__":
     #plot_avgSpec_comp('patchy', 1000, 'bk')
     #plot_avgSpec_comp('patchy', 1000, 'qk')
-    plot_avgSpec_comp('patchy', 1000, 'bk', kmax=True)
-    plot_avgSpec_comp('patchy', 1000, 'qk', kmax=True)
-    plot_avgSpec_comp('patchy', 1000, 'bk', avgk=True)
-    plot_avgSpec_comp('patchy', 1000, 'qk', avgk=True)
+    #plot_avgSpec_comp('patchy', 1000, 'bk', kmax=True)
+    #plot_avgSpec_comp('patchy', 1000, 'qk', kmax=True)
+    #plot_avgSpec_comp('patchy', 1000, 'bk', avgk=True)
+    #plot_avgSpec_comp('patchy', 1000, 'qk', avgk=True)
+    plot_avgSpec_comp(['cmassfid', 'patchy'], [1, 10], 'bkratio', kmax=True)
+    plot_avgSpec_comp(['cmassfid', 'patchy'], [1, 10], 'qkratio', kmax=True)
+    plot_avgSpec_comp(['cmassfid', 'patchy'], [1, 10], 'bkratio', avgk=True)
+    plot_avgSpec_comp(['cmassfid', 'patchy'], [1, 10], 'qkratio', avgk=True)
