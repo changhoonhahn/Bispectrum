@@ -104,7 +104,7 @@ class FFT:
     
         cat = self.catalog['catalog']
         # determine "idata"
-        if cat['name'].lower() == 'cmass': 
+        if 'cmass' in cat['name'].lower(): 
             idata = 1 
             ifc = 0 
         elif cat['name'].lower() == 'lasdamasgeo': 
