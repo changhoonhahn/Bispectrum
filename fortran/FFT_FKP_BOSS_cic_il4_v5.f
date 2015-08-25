@@ -687,7 +687,8 @@ c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       integer idata
       ! fiducial cosmology (OmM=0.31 h=0.676 Ol=0.69 Obh2=0.022)
       if (idata.eq.1) then !CMASS sample
-         Om0=0.274
+!         Om0=0.274
+         Om0=0.31   ! fiducial cosmology
       elseif (idata.eq.2) then !LasDamas
          Om0=0.25
       elseif (idata.eq.3) then !QPM north
@@ -833,7 +834,8 @@ c            read(4,*)z(i),dum,dum,selfun(i),dum,dum,dum
       ycm=0.
       zcm=0.
       if (idata.eq.1) then 
-         read(4,*)Nariel !ariel has Nobjects in first line:
+         read(4,'(a)')dummy !skip comment line 
+!         read(4,*)Nariel !ariel has Nobjects in first line:
       elseif (idata.eq.3 .or. idata.eq.4) then !QPM info mock files
          lssinfofile=lssfile(1:len_trim(lssfile))//'.info'
          open(unit=5,file=lssinfofile,status='old',form='formatted')
@@ -845,7 +847,9 @@ c            read(4,*)z(i),dum,dum,selfun(i),dum,dum,dum
       endif
       do i=1,Nmax
          if (idata.eq.1) then !BOSS
-            read(4,*,end=13)ra,dec,az,comp,nbb,wsys,wred
+!            read(4,*,end=13)ra,dec,az,comp,nbb,wsys,wred !original input
+            read(4,*,end=13)ra,dec,az,nbb,wsys,wnoz,wcp,comp
+            wred=wnoz+wcp-1.
             nbg(i)=nbb*comp
          elseif (idata.eq.2) then !LasDamas
             read(4,*,end=13)ra,dec,az
@@ -993,12 +997,16 @@ c         enddo
          ycm=0.
          zcm=0.
          if (idata.eq.1) then !BOSS
-            read(4,*)Nariel !ariel has Nobjects in first line
+            read(4,'(a)')dummy !skip comment line
+!            read(4,*)Nariel !ariel has Nobjects in first line
          endif   
          do i=1,Nmax
             if (idata.eq.1) then !BOSS
 c               read(4,*,end=15)ra,dec,az,nbb
-               read(4,*,end=15)ra,dec,az,comp,nbb,wsys,wred
+c               read(4,*,end=15)ra,dec,az,comp,nbb,wsys,wred
+               read(4,*,end=15)ra,dec,az,nbb,comp
+               wsys=1.
+               wred=1.
                if (wsys.ne.1. .or. wred.ne.1.) then
                   write(*,*)'randoms have bad systot weights',wsys,wred
                   stop
