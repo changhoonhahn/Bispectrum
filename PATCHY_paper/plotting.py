@@ -111,9 +111,9 @@ def plot_spec(x, y, type, fig=None, **kwargs):
         sub.set_xlabel('k', fontsize=20)
     elif 'bk' in type or 'qk' in type: 
         if 'avgk' in kwargs.keys(): 
-            sub.set_xlabel(r'Average $(k_1, k_2, k_3)$')
+            sub.set_xlabel(r'Average $\mathtt{(k_1, k_2, k_3)}$')
         elif 'kmax' in kwargs.keys(): 
-            sub.set_xlabel(r'Maximum $(k_1, k_2, k_3)$')
+            sub.set_xlabel(r'Maximum $\mathtt{(k_1, k_2, k_3)}$')
         else: 
             sub.set_xlabel(r'Triangle')
 
@@ -213,10 +213,16 @@ def plot_avgSpec_comp(catalog_names, n_mocks, type, **kwargs):
                 
                 kwargs['c'] = pretty_colors[i_cat+1]
                 kwargs['label'] = ''.join([catalog_name.upper(), ': ', str(n_mocks[i_cat])])
-                spec_fig = plot_spec(k_arr, spec_ratio, type, fig=spec_fig, **kwargs)
 
+                if 'bk' in type: 
+                    kwargs['ylabel'] = ''.join([r"$\mathtt{B(k)/B(k)_{", first_cat_name, "}}$"])
+                elif 'qk' in type: 
+                    ''.join([r"$\mathtt{Q(k)/Q(k)_{", first_cat_name, "}}$"])
+                spec_fig = plot_spec(k_arr, spec_ratio, type, fig=spec_fig, **kwargs)
+                
             except NameError: 
                 first_spec = avg_spec
+                first_cat_name = catalog_name.upper()
             
 
     cat_str = '_'.join(catalog_names)
@@ -271,7 +277,7 @@ if __name__=="__main__":
     #plot_avgSpec_comp('patchy', 1000, 'qk', kmax=True)
     #plot_avgSpec_comp('patchy', 1000, 'bk', avgk=True)
     #plot_avgSpec_comp('patchy', 1000, 'qk', avgk=True)
-    plot_avgSpec_comp(['cmassfid', 'patchy'], [1, 10], 'bkratio', kmax=True)
-    plot_avgSpec_comp(['cmassfid', 'patchy'], [1, 10], 'qkratio', kmax=True)
-    plot_avgSpec_comp(['cmassfid', 'patchy'], [1, 10], 'bkratio', avgk=True)
-    plot_avgSpec_comp(['cmassfid', 'patchy'], [1, 10], 'qkratio', avgk=True)
+    plot_avgSpec_comp(['cmassfid', 'patchy'], [1, 1000], 'qk', avgk=True, outlier='lowk', 
+            xrange=[10**-2., 0.3*10**0.], yrange=[-0.5, 2.5])
+    plot_avgSpec_comp(['cmassfid', 'patchy'], [1, 1000], 'qkratio', avgk=True, outlier='lowk', 
+            xrange=[10**-2., 0.3*10**0.], yrange=[-0.5, 2.5])
