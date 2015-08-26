@@ -191,6 +191,9 @@ def avg_spec(catalogs, type, **kwargs):
     ----------
     catalogs : list of catalog dictionaries 
     type : pk, bk, qk
+    avgk : True/False return Average(k1,k2,k3) for bispectrum
+    kmax : True/False return Maximum(k1,k2,k3) for bispectrum 
+    outlier : 'lowk' Remove specified outliers
     
     Notes
     -----
@@ -240,6 +243,24 @@ def avg_spec(catalogs, type, **kwargs):
                 # there should be key error
                 pass 
             
+            if 'outlier' in kwargs.keys():  
+                # if outlier cleanup is specified
+                if kwargs['outlier'] == 'lowk': 
+                    # remove triangles with lowk 
+                    outlier_index = np.where( 
+                            (bipowerspec.k1/bipowerspec.k_fund > 6.) & 
+                            (bipowerspec.k2/bipowerspec.k_fund > 6.) &
+                            (bipowerspec.k3/bipowerspec.k_fund > 6.)) 
+                    
+                    try: 
+                        if not np.array_equal(prev_outlier_index[0], outlier_index[0]): 
+                            raise ValueError("Outlier Index not equivalent throughout average") 
+                        prev_outlier_index = outlier_index
+                    except NameError: 
+                        prev_outlier_index = outlier_index
+                else: 
+                    raise NotImplementedError("Only low-k outlier implemented")  
+
             try: 
                 if kwargs['avgk']:  # average(k1,k2,k3)
                     try: 
@@ -263,15 +284,19 @@ def avg_spec(catalogs, type, **kwargs):
                         k_arr = bipowerspec.i_triangle
             
             if 'bk' in type: 
-                try: 
-                    tot_spec += bipowerspec.Bk
-                except NameError: 
-                    tot_spec = bipowerspec.Bk
+                B_Q_K = bipowerspec.Bk
             elif 'qk' in type:
-                try: 
-                    tot_spec += bipowerspec.Qk
-                except NameError: 
-                    tot_spec = bipowerspec.Qk
+                B_Q_K = bipowerspec.Qk
+
+            # impose outlier filter 
+            if 'outlier' in kwargs.keys(): 
+                k_output = k_arr[outlier_index]
+                B_Q_K = B_Q_K[outlier_index]
+
+            try: 
+                tot_spec += B_Q_K
+            except NameError: 
+                tot_spec = B_Q_K
 
         # number of mocks 
         try: 
@@ -282,7 +307,7 @@ def avg_spec(catalogs, type, **kwargs):
     # calculate average P(k), B(k) or Q(k)
     avg_spec = tot_spec/np.float(n_mocks)   
 
-    return [k_arr, avg_spec]
+    return [k_output, avg_spec]
 
 if __name__=='__main__': 
     catdict = {'catalog': {'name': 'patchy', 'n_mock': 1}} 
