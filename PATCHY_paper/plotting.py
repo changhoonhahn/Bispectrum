@@ -204,27 +204,42 @@ def plot_avgSpec_comp(catalog_names, n_mocks, type, **kwargs):
             raise NotImplementedError("Bispectrum not implemented yet")
 
         if 'ratio' not in type: 
-            kwargs['c'] = pretty_colors[i_cat+1]
-            kwargs['label'] = ''.join([catalog_name.upper(), ': ', str(n_mocks[i_cat])])
+            if 'cmass' in catalog_name: 
+                if catalog_name == 'cmassfid': 
+                    kwargs['c'] = pretty_colors[0]
+                    kwargs['label'] = 'CMASS DR12v4'
+            else: 
+                kwargs['c'] = pretty_colors[i_cat+2]
+                kwargs['label'] = ''.join([str(n_mocks[i_cat]), ' ', catalog_name.upper(), ' Mocks'])
             spec_fig = plot_spec(k_arr, avg_spec, type, fig=spec_fig, **kwargs)
         else: 
             try: 
                 spec_ratio = avg_spec/first_spec
                 
-                kwargs['c'] = pretty_colors[i_cat+1]
-                kwargs['label'] = ''.join([catalog_name.upper(), ': ', str(n_mocks[i_cat])])
+                if 'cmass' in catalog_name: 
+                    if catalog_name == 'cmassfid': 
+                        kwargs['c'] = pretty_colors[0]
+                        kwargs['label'] = 'CMASS DR12v4'
+                else: 
+                    kwargs['c'] = pretty_colors[i_cat+2]
+                    kwargs['label'] = ''.join([str(n_mocks[i_cat]), ' ', catalog_name.upper(), ' Mocks'])
 
                 if 'bk' in type: 
                     kwargs['ylabel'] = ''.join([r"$\mathtt{B(k)/B(k)_{", first_cat_name, "}}$"])
                 elif 'qk' in type: 
-                    ''.join([r"$\mathtt{Q(k)/Q(k)_{", first_cat_name, "}}$"])
+                    kwargs['ylabel'] = ''.join([r"$\mathtt{Q(k)/Q(k)_{", first_cat_name, "}}$"])
                 spec_fig = plot_spec(k_arr, spec_ratio, type, fig=spec_fig, **kwargs)
                 
             except NameError: 
                 first_spec = avg_spec
-                first_cat_name = catalog_name.upper()
+                if 'cmass' in catalog_name: 
+                    if catalog_name == 'cmassfid':
+                        first_cat_name = 'CMASS'
+                    else: 
+                        raise NotImplementedError("ONLY CMASS IMPLEMENTED")
+                else: 
+                    first_cat_name = catalog_name.upper()
             
-
     cat_str = '_'.join(catalog_names)
     
     # save figure 
@@ -280,4 +295,4 @@ if __name__=="__main__":
     plot_avgSpec_comp(['cmassfid', 'patchy'], [1, 1000], 'qk', avgk=True, outlier='lowk', 
             xrange=[10**-2., 0.3*10**0.], yrange=[-0.5, 2.5])
     plot_avgSpec_comp(['cmassfid', 'patchy'], [1, 1000], 'qkratio', avgk=True, outlier='lowk', 
-            xrange=[10**-2., 0.3*10**0.], yrange=[-0.5, 2.5])
+            xrange=[10**-2., 0.3*10**0.], yrange=[0.0, 2.5])
