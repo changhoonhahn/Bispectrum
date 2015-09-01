@@ -118,7 +118,7 @@ class FFT:
             ifc = 0 
             izbin = 3   # only for patchy 
         elif cat['name'].lower() == 'nseries': 
-            idata = 10 
+            idata = 9 
             ifc = 0 
         else: 
             raise NameError('Not yet included in FFT code') 

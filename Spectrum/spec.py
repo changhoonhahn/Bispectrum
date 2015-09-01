@@ -30,6 +30,12 @@ class Spec:
         if 'spec' not in catalog.keys(): 
             self.catalog['spec'] = {'P0': 20000, 'sscale':3600.0, 'Rbox':1800.0, 'box':3600, 'grid': 360}
 
+        # if power/bispectrum parameters are specified in kwargs
+        if 'Ngrid' in kwargs.keys(): 
+            (self.catalog['spec'])['grid'] = kwargs['Ngrid']
+        if 'P0' in kwargs.keys(): 
+            (self.catalog['spec'])['P0'] = kwargs['P0']
+
         self.scale = (self.catalog['spec'])['box']
         k_fund = (2.0*m.pi)/np.float(self.scale)        # k fundamental 
         self.k_fund = k_fund 

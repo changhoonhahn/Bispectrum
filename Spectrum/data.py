@@ -107,6 +107,24 @@ class Data:
             elif DorR == 'random':                  # random catalog 
                 file_name = ''.join([data_dir, 
                     'cmass-dr12v4-N-Reid', cosmo_str, '.ran.dat'])
+        elif 'nseries' in cat['name'].lower():              # Nseries ---------------------
+            data_dir = '/mount/riachuelo1/hahn/data/Nseries/'
+
+            if DorR == 'data': 
+                if corr['name'].lower() in ('default'): 
+                    file_name = ''.join([data_dir, 
+                        'CutskyN', str(cat['n_mock']), '.dat'])
+                elif 'zbin' in corr['name'].lower():
+                    # Redshift binning of mocks (e.g. zbin1of5)
+                    file_name = ''.join([data_dir, 
+                        'CutskyN', str(cat['n_mock']), '.', corr['name'].lower(), '.dat'])
+                else: 
+                    raise NotImplementedError('Not yet implemented')
+            elif DorR == 'random':      # random catalog
+                # regardless of how it's corrected
+                file_name = ''.join([data_dir, 
+                    'Nseries_cutsky_randoms_50x_redshifts_comp.dat']) 
+
         else: 
             return None 
 
@@ -125,7 +143,7 @@ class Data:
         else: 
             corr = {'name': 'default'} 
         
-        catalog_cols, col_index = self.Columns()    # get columns and indices
+        catalog_cols, col_index, col_fmt = self.Columns()    # get columns and indices
         
         # read in data or random file 
         dr_data = np.loadtxt(self.file_name, unpack=True, usecols=col_index)
@@ -134,6 +152,30 @@ class Data:
         for i_col, catalog_col in enumerate(catalog_cols): 
             setattr(self, catalog_col, dr_data[i_col]) 
 
+        return None
+
+    def Write(self, **kwargs): 
+        ''' Write out data 
+
+        '''
+        catalog_cols, col_index, col_fmt = self.Columns()    # get columns and indices
+
+        col_list = [] 
+        for col in catalog_cols: 
+            col_data = getattr(self, col)
+            try: 
+                if not isinstance(col_data, col_type): 
+                    raise ValueError("Data columns are not the same data type")
+                else: 
+                    pass
+            except NameError: 
+                col_type = type(col_data)
+            
+            col_list.append(col_data) 
+
+        header_str = ' '.join(['Columns :']+catalog_cols)
+        np.savetxt(self.file_name, (np.vstack(np.array(col_list))).T, fmt=col_fmt, delimiter='\t', header=header_str)
+    
         return None
 
     def Columns(self): 
@@ -146,29 +188,37 @@ class Data:
         * Or of catalog_columns and column_index have to be the same!
         '''
         DorR = self.Type    # data or random 
-        cat = self.catalog
+        cat = self.catalog['catalog']
 
         if cat['name'].lower() == 'patchy':                   # PATCHY ------------------
             if DorR == 'data':      # data
                 catalog_columns = ['ra', 'dec', 'z', 'nbar', 'wfc'] # columns 
-                column_index = [0,1,2,3,4]
+                catalog_col_fmt = ['%10.5f', '%10.5f', '%10.5f', '%.5e', '%10.5f'] 
             else:                   # random 
                 catalog_columns = ['ra', 'dec', 'z', 'nbar']        # columns 
-                column_index = [0,1,2,3]
+                catalog_col_fmt = ['%10.5f', '%10.5f', '%10.5f', '%.5e']
         elif 'cmass' in cat['name'].lower():                    # CMASS -----------------
             if DorR == 'data':      # data
                 catalog_columns = ['ra', 'dec', 'z', 'nbar', 'wsys', 'wnoz', 'wfc', 'comp']
-                catalog_index = [0,1,2,3,4,5,6,7]
+                catalog_col_fmt = ['%10.5f', '%10.5f', '%10.5f', '%.5e', '%10.5f', '%10.5f', '%10.5f', '%10.5f'] 
             else:                   # random 
                 catalog_columns = ['ra', 'dec', 'z', 'nbar', 'comp']
-                catalog_index = [0,1,2,3,4]
+                catalog_col_fmt = ['%10.5f', '%10.5f', '%10.5f', '%.5e', '%10.5f'] 
+        elif 'nseries' in cat['name'].lower():                  # Nseries -----------------
+            if DorR == 'data':      # data
+                catalog_columns = ['ra', 'dec', 'z', 'wfc', 'comp']
+                catalog_col_fmt = ['%10.5f', '%10.5f', '%10.5f', '%10.5f', '%10.5f'] 
+            else:                   # random 
+                catalog_columns = ['ra', 'dec', 'z', 'comp']
+                catalog_col_fmt = ['%10.5f', '%10.5f', '%10.5f', '%10.5f'] 
         else: 
             raise NotImplementedError("Not Yet Coded")
             
         self.columns = catalog_columns
-        self.col_index = column_index
+        self.col_index = range(len(catalog_columns)) 
+        self.col_fmt = catalog_col_fmt
         
-        return [self.columns, self.col_index]
+        return [self.columns, self.col_index, self.col_fmt]
 
     def Cosmo(self): 
         ''' Set cosmology of catalog 
