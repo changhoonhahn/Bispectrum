@@ -89,6 +89,7 @@
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       ! idata= 1 (BOSS data), 2(LasDamas), 3-4 (QPM mocks N-S)
       ! idata= 5 (LOWZ data), 6(PATCHY), 7-8 (PTHalos mocks N-S)
+      ! idata= 9 (Nseries data)
       call getarg(1,typestr)
       read(typestr,*)idata 
       call cosmology(idata,Om0,OL0)
@@ -705,6 +706,8 @@ c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
          Om0=0.274
       elseif (idata.eq.8) then !PTHALOS CMASS south
          Om0=0.274
+      elseif (idata.eq.9) then !Nseries Mocks
+         Om0=0.31
       else
          write(*,*)'specify which dataset you want!'
          stop
@@ -739,6 +742,10 @@ c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
          dir='/mount/riachuelo2/rs123/BOSS/PTHalos/'
          selfunfile=dir(1:len_trim(dir))//
      $    'nzfit_dr11_vm22_south.txt'
+      elseif (idata.eq.9) then 
+         dir='/mount/riachuelo1/hahn/data/Nseries/'
+         selfunfile=dir(1:len_trim(dir))//
+     $    'nbar-nseries-fibcoll.dat'
       else !just to have z(Nsel)            
          dir='/mount/riachuelo2/rs123/BOSS/QPM/cmass/'
          selfunfile=dir(1:len_trim(dir))//'cmass-dr12v1-sgc.zsel'
@@ -762,6 +769,13 @@ c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 c            read(4,*)z(i),dum,dum,selfun(i),dum,dum,dum
             read(4,*)z(i),selfun(i)
          enddo   
+         close(4)
+         call spline(z,selfun,Nsel,3e30,3e30,sec)
+      elseif (idata.eq.9) then
+         open(unit=4,file=selfunfile,status='old',form='formatted')
+         do i=1,Nsel
+            read(4,*)z(i),dum,dum,selfun(i)
+         enddo 
          close(4)
          call spline(z,selfun,Nsel,3e30,3e30,sec)
       else
@@ -844,7 +858,9 @@ c            read(4,*)z(i),dum,dum,selfun(i),dum,dum,dum
          enddo
       elseif(idata.eq.7 .or. idata.eq.8) then
          read(4,'(a)')dummy !skip comment line
-      endif
+      elseif (idata.eq.9) then !Nseries
+         read(4,'(a)')dummy !skip comment line
+      endif   
       do i=1,Nmax
          if (idata.eq.1) then !BOSS
 !            read(4,*,end=13)ra,dec,az,comp,nbb,wsys,wred !original input
@@ -915,6 +931,12 @@ c            read(4,*,end=13)ra,dec,az,dum,nbb,comp,bias !old version
             wred=wnoz+wcp-1.
             comp=1.
             nbb=nbar2(az)
+            nbg(i)=nbb*comp
+         elseif (idata.eq.9) then   !Nseries
+            read(4,*,end=13)ra,dec,az,wcp,comp
+            wsys=1.
+            wred=wcp
+            nbb=nbar(az)
             nbg(i)=nbb*comp
          endif
             
@@ -999,7 +1021,7 @@ c         enddo
          if (idata.eq.1) then !BOSS
             read(4,'(a)')dummy !skip comment line
 !            read(4,*)Nariel !ariel has Nobjects in first line
-         endif   
+         endif 
          do i=1,Nmax
             if (idata.eq.1) then !BOSS
 c               read(4,*,end=15)ra,dec,az,nbb
@@ -1068,6 +1090,12 @@ c               read(4,*,end=15)ra,dec,az,comp,nbb,wsys,wred
                wred=wnoz+wcp-1.
                comp=1.
                nbb=nbar2(az)
+               nbr(i)=nbb*comp ! number density as given in randoms (comp weighted)
+            elseif (idata.eq.9) then    !Nseries
+               read(4,*,end=15)ra,dec,az,comp
+               wsys=1.
+               wred=1.
+               nbb=nbar(az)
                nbr(i)=nbb*comp ! number density as given in randoms (comp weighted)
             endif
             
